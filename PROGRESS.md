@@ -9,9 +9,10 @@ history alone.
 
 ## Current position
 
-The functional MVP and its agentic quality/safety layer described in Phases 1–7
-are implemented. The remaining work is final documentation, demo preparation,
-and submission.
+The functional MVP, agentic quality/safety layer and reviewer documentation
+described in Phases 1–8 are implemented. Only candidate-owned submission steps
+remain: record actual time spent, commit/push this phase, verify public access and
+send the required email.
 
 | Phase | Scope | Status | Evidence |
 |---|---|---|---|
@@ -21,7 +22,8 @@ and submission.
 | 4 | Read-side CRM workflow | Complete | `66619c6` |
 | 5 | Opportunity updates and follow-ups | Complete | `8e95520` |
 | 6 | Deterministic handoff orchestration | Complete | `3b2046e` |
-| 7 | Agentic quality, safety and operational hardening | Complete, not yet committed | Current working tree |
+| 7 | Agentic quality, safety and operational hardening | Complete | `00da573` |
+| 8 | Reviewer experience and submission preparation | Complete | Final submission documentation |
 
 Current verification checkpoint:
 
@@ -453,13 +455,60 @@ Clean import: 10,000 companies, 20,000 contacts, 16 fair editions,
 Restart: no migrations to apply; legacy archive already imported, skipping
 ```
 
-## Remaining project phase
+## Phase 8 — Reviewer experience and submission preparation
 
-### Phase 8 — README, demo, and submission
+### Objective
 
-- Consolidate architecture, import decisions, trade-offs, handoff policy,
-  examples, unfinished work, and actual time spent into `README.md`.
-- Prepare the 5–7 minute demo path and fallback conflict example.
-- Commit and push the final tested state.
-- Verify anonymous public repository access.
-- Submit the exact required email with the full tested commit hash.
+Make the product, agent architecture, trade-offs, verification evidence and demo
+path understandable without requiring the reviewer to reconstruct intent from
+the source code or development conversation.
+
+### Delivered
+
+- Replaced the starter README with reviewer-facing documentation covering:
+  - clean startup and lifecycle commands;
+  - implemented sales workflows;
+  - assistant architecture and explicit role contracts;
+  - selected handoff policy and competing stakeholder requests;
+  - reproducible incomplete, conflicting and complete archive examples;
+  - pinned stack versions;
+  - data-model, import and search decisions;
+  - AI-assisted development method and human responsibility;
+  - test commands, deliberate scope and unfinished work.
+- Added `docs/DECISIONS.md` with accepted and rejected product/engineering
+  alternatives, including the deterministic stand-in, conflict preservation,
+  immutable snapshots, evidence and human approval boundary.
+- Added `docs/DEMO.md` with a timed 5–7 minute English presentation:
+  - incomplete enquiry and role separation;
+  - human-approved action;
+  - correction and `STOP → CONTINUE` rerun comparison;
+  - adversarial height conflict;
+  - engineering evidence and likely interview questions.
+- Added `SUBMISSION_CHECKLIST.md` with clean-clone, demo, public repository,
+  commit-hash and exact email-format checks.
+- Added `COMPLIANCE.md` as a concise requirement-to-evidence matrix, including
+  explicit out-of-scope items and pending candidate-owned submission actions.
+- Verified the three documented examples directly against the clean PostgreSQL
+  import:
+  - `OP011026`: allocated area missing;
+  - `OP000005`: requested `6.00 m`, fair maximum `5.00 m`;
+  - `OP000230`: complete and within its fair limit.
+
+### Remaining candidate-owned steps
+
+- Replace the single README time-spent placeholder with the actual hours and
+  minutes. This cannot be inferred reliably from commit timestamps.
+- Rehearse once, reset to known data, then commit and push Phase 8.
+- Verify that the public repository opens without authentication.
+- Copy the full final commit hash and send the required submission email. These
+  external submission actions are intentionally not performed by the app.
+
+### Verification
+
+- All Phase 8 claims are traceable to the assignment, source, tests or clean
+  PostgreSQL archive.
+- Documentation uses archive-backed demo records rather than test fixtures.
+- No protected assignment, environment, policy, verification or data file was
+  changed.
+- Phase 8 changes documentation only; the final Phase 7 runtime checkpoint
+  remains 34 passing tests and an unchanged `verify.sh` pass.
