@@ -11,6 +11,9 @@
         <div class="context-line">
           {% if activity.author %}<span>{{ activity.author }}</span>{% endif %}
           {% if activity.follow_up_on %}<span>Follow up {{ activity.follow_up_on|date:"j M Y" }}</span>{% endif %}
+          {% if activity.source_handoff_run %}
+            <a href="{% url 'crm:handoff-run-detail' activity.opportunity.opportunity_code activity.source_handoff_run.pk %}">Approved from handoff run #{{ activity.source_handoff_run.pk }}</a>
+          {% endif %}
         </div>
       </div>
     </article>

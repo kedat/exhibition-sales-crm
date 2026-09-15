@@ -17,6 +17,8 @@
     <div class="success-banner" role="status">Follow-up scheduled and available on the dashboard.</div>
   {% elif saved_action == "handoff" %}
     <div class="success-banner" role="status">A new deterministic handoff run was saved.</div>
+  {% elif saved_action == "assistant-follow-up" %}
+    <div class="success-banner" role="status">The assistant recommendation was approved and scheduled as a follow-up.</div>
   {% endif %}
 
   <section class="record-heading opportunity-heading">
@@ -57,7 +59,7 @@
           <span class="local-badge">No model or API</span>
         </div>
         {% if latest_handoff %}
-          {% include "crm/_handoff_run.html" with handoff_run=latest_handoff %}
+          {% include "crm/_handoff_run.html" with handoff_run=latest_handoff comparison=latest_comparison %}
         {% else %}
           <div class="empty-state handoff-empty">
             <h3>No handoff has been prepared yet</h3>
@@ -80,7 +82,7 @@
         {% endif %}
       </section>
 
-      <section class="panel">
+      <section class="panel" id="activity">
         <div class="panel-heading"><h2>Opportunity activity</h2></div>
         {% include "crm/_activity_timeline.html" with activities=activities empty_message="No activity for this opportunity." %}
       </section>

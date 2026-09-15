@@ -237,6 +237,13 @@ class Activity(models.Model):
         null=True,
         blank=True,
     )
+    source_handoff_run = models.OneToOneField(
+        "HandoffRun",
+        on_delete=models.SET_NULL,
+        related_name="approved_follow_up",
+        null=True,
+        blank=True,
+    )
     activity_type = models.CharField(max_length=16, choices=ActivityType.choices)
     occurred_at = models.DateTimeField()
     details = models.TextField()

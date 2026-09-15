@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import Count, Prefetch, Subquery
@@ -10,6 +12,7 @@ from django.views.decorators.http import require_POST
 from crm.forms import ConversationForm, FollowUpForm, OpportunityUpdateForm
 from crm.models import Activity, Company, Contact, HandoffRun, Opportunity
 from crm.services.handoff import ASSISTANT_LABEL, run_handoff
+from crm.services.handoff_comparison import compare_handoff_runs
 
 
 FOLLOW_UP_PREVIEW_LIMIT = 8
@@ -147,10 +150,13 @@ def opportunity_detail(request, opportunity_code):
         ),
         opportunity_code=opportunity_code,
     )
-    activities = opportunity.activities.select_related("company").order_by(
-        "-occurred_at"
+    activities = opportunity.activities.select_related(
+        "company", "source_handoff_run"
+    ).order_by("-occurred_at")
+    handoff_history = list(
+        opportunity.handoff_runs.select_related("approved_follow_up").all()
     )
-    handoff_history = list(opportunity.handoff_runs.all())
+    latest_handoff = handoff_history[0] if handoff_history else None
 
     return render(
         request,
@@ -160,7 +166,10 @@ def opportunity_detail(request, opportunity_code):
             "activities": activities,
             "saved_action": request.GET.get("saved"),
             "assistant_label": ASSISTANT_LABEL,
-            "latest_handoff": handoff_history[0] if handoff_history else None,
+            "latest_handoff": latest_handoff,
+            "latest_comparison": (
+                compare_handoff_runs(latest_handoff) if latest_handoff else None
+            ),
             "handoff_history": handoff_history,
         },
     )
@@ -287,7 +296,10 @@ def handoff_create(request, opportunity_code):
 def handoff_run_detail(request, opportunity_code, run_id):
     handoff_run = get_object_or_404(
         HandoffRun.objects.select_related(
-            "opportunity", "opportunity__company", "opportunity__fair_edition"
+            "opportunity",
+            "opportunity__company",
+            "opportunity__fair_edition",
+            "approved_follow_up",
         ),
         pk=run_id,
         opportunity__opportunity_code=opportunity_code,
@@ -298,6 +310,61 @@ def handoff_run_detail(request, opportunity_code, run_id):
         {
             "opportunity": handoff_run.opportunity,
             "handoff_run": handoff_run,
+            "comparison": compare_handoff_runs(handoff_run),
+            "assistant_label": ASSISTANT_LABEL,
+        },
+    )
+
+
+def handoff_follow_up_create(request, opportunity_code, run_id):
+    handoff_run = get_object_or_404(
+        HandoffRun.objects.select_related(
+            "opportunity", "opportunity__company", "opportunity__fair_edition"
+        ),
+        pk=run_id,
+        opportunity__opportunity_code=opportunity_code,
+    )
+    opportunity = handoff_run.opportunity
+    existing_follow_up = Activity.objects.filter(
+        source_handoff_run=handoff_run
+    ).first()
+    initial = {
+        "details": handoff_run.next_action,
+        "follow_up_on": timezone.localdate() + timedelta(days=1),
+    }
+    form = FollowUpForm(request.POST or None, initial=initial)
+
+    if request.method == "POST" and form.is_valid():
+        if existing_follow_up is not None:
+            form.add_error(
+                None,
+                "This recommendation has already been approved as a follow-up.",
+            )
+        else:
+            Activity.objects.create(
+                company=opportunity.company,
+                opportunity=opportunity,
+                source_handoff_run=handoff_run,
+                activity_type=Activity.ActivityType.TASK,
+                occurred_at=timezone.now(),
+                details=form.cleaned_data["details"],
+                follow_up_on=form.cleaned_data["follow_up_on"],
+                completion_marker=Activity.CompletionMarker.PENDING,
+                author=opportunity.company.sales_rep,
+            )
+            return redirect(
+                f"{opportunity.get_absolute_url()}?saved=assistant-follow-up"
+                "#technical-handoff"
+            )
+
+    return render(
+        request,
+        "crm/handoff_follow_up.html",
+        {
+            "opportunity": opportunity,
+            "handoff_run": handoff_run,
+            "existing_follow_up": existing_follow_up,
+            "form": form,
             "assistant_label": ASSISTANT_LABEL,
         },
     )

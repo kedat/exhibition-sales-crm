@@ -1,6 +1,6 @@
 # Implementation progress
 
-Last updated: 15 September 2026
+Last updated: 16 September 2026
 
 This document tracks the implementation against the staged delivery plan. It is
 intended to help reviewers distinguish completed work, deliberate scope choices,
@@ -9,8 +9,9 @@ history alone.
 
 ## Current position
 
-The functional MVP described in Phases 1–6 is implemented. The remaining work is
-operational hardening, final documentation, demo preparation, and submission.
+The functional MVP and its agentic quality/safety layer described in Phases 1–7
+are implemented. The remaining work is final documentation, demo preparation,
+and submission.
 
 | Phase | Scope | Status | Evidence |
 |---|---|---|---|
@@ -19,18 +20,21 @@ operational hardening, final documentation, demo preparation, and submission.
 | 3 | Transactional legacy archive import | Complete | `9acdb62` |
 | 4 | Read-side CRM workflow | Complete | `66619c6` |
 | 5 | Opportunity updates and follow-ups | Complete | `8e95520` |
-| 6 | Deterministic handoff orchestration | Complete, not yet committed | Current working tree |
+| 6 | Deterministic handoff orchestration | Complete | `3b2046e` |
+| 7 | Agentic quality, safety and operational hardening | Complete, not yet committed | Current working tree |
 
 Current verification checkpoint:
 
 ```text
-27 automated tests pass
+34 automated tests pass
 Django system check passes
 No missing migrations
-All three CRM migrations apply successfully
+All four CRM migrations apply successfully
 ./verify.sh passes unchanged
 Protected assignment and data files are unchanged
 Application is reachable at http://localhost:3000
+Clean reset imports all 85,016 archive records
+Later starts retain data and skip duplicate import
 ```
 
 ## Phase 1 — Containerized application skeleton
@@ -337,10 +341,10 @@ Primary outcome matrix:
 - No chat interface, agent framework, automatic email, model download, API key,
   or external model call. These are explicitly unnecessary or prohibited by the
   assignment.
-- Comparing field-level changes between two historical runs is a useful optional
-  improvement after the required phases.
-- The assistant recommends a next action but does not execute it automatically;
-  sales retains control of customer communication and technical handoff.
+- Field-level run comparison and human-approved follow-up creation were deferred
+  at this checkpoint and completed in Phase 7.
+- The assistant never contacts a customer or starts technical work automatically;
+  sales retains control of external communication and technical handoff.
 
 ### Verification
 
@@ -387,38 +391,69 @@ The agentic value comes from orchestration, role separation, critique, policy
 gating, state observation, and an auditable feedback loop—not from pretending a
 language model is present.
 
-## Possible agentic extensions after the required work
+## Phase 7 — Agentic quality, safety and operational hardening
 
-These should remain behind Phases 7 and 8 in priority order:
+### Objective
 
-1. **Run comparison** — show exactly which snapshot fields changed between a
-   `STOP` run and the later `CONTINUE` run.
-2. **Remediation planner** — translate reason codes into a structured checklist
-   that sales can approve, such as collecting a plot drawing or revising height.
-3. **Human-approved tool action** — allow the coordinator's recommendation to
-   prefill a follow-up task, but require the salesperson to confirm before saving.
-4. **Policy simulation** — compare a Sales-first policy and the selected
-   Technical-safe policy against the same snapshot without changing stored CRM
-   data.
-5. **Evaluation dashboard** — run a fixed scenario suite and display outcome,
-   reason-code, determinism, and regression results as an agent evaluation rather
-   than only unit-test output.
-6. **Evidence links** — attach every Checker finding to the exact snapshot field
-   that supports it, making the reasoning trace even easier to inspect.
+Make the orchestration visibly responsive to human corrections, ground its
+findings in evidence, connect recommendations to controlled CRM actions, and
+evaluate behavior rather than merely test CRUD endpoints.
 
-The first and third options would add the most visible agentic value to a demo
-without violating the no-external-model constraint or expanding into floor-plan,
-quotation, or technical-approval work.
+### Delivered
 
-## Remaining project phases
+- Run comparison against the immediately preceding run for the same opportunity:
+  - decision transition such as `STOP → CONTINUE`;
+  - before/after values for decision-relevant snapshot fields;
+  - resolved and newly introduced reason codes;
+  - an explicit deterministic confirmation when no relevant input changed.
+- Evidence-backed Checker output:
+  - every check identifies the source record, field, and immutable value used;
+  - height conflicts cite both requested height and the fair maximum;
+  - missing values remain explicit evidence rather than disappearing from output.
+- Human-approved action workflow:
+  - coordinator recommendations prefill a follow-up form;
+  - the salesperson can edit the action and date before confirming;
+  - no task is created on page load;
+  - each approved task retains provenance to its source `HandoffRun`;
+  - a database one-to-one constraint and UI guard prevent duplicate approval;
+  - the opportunity timeline links the task back to its immutable run.
+- Agent behavior evaluations cover:
+  - deterministic output for the same snapshot;
+  - multiple simultaneous blockers;
+  - the Checker overruling an unsafe Preparer proposal;
+  - height exactly equal to the fair limit;
+  - evidence retained with a conflict;
+  - changed input and decision comparison;
+  - human approval and duplicate-action prevention.
+- Clean operational lifecycle completed against the original archive:
+  - project-scoped Compose volume reset;
+  - empty-schema migration through `0004`;
+  - complete archive import;
+  - unchanged reviewer verification script;
+  - app restart with no migration work and duplicate import skipped.
 
-### Phase 7 — Tests and operational hardening
+### Remaining or deliberately deferred
 
-- Run the final clean reset/import/start/restart workflow.
-- Expand edge-case coverage where valuable.
-- Recheck shell executable bits, protected files, credentials, pinned versions,
-  and absence of external runtime calls.
-- Complete the end-to-end manual workflow on the final review commit.
+- A policy-simulation UI is not necessary to demonstrate the selected policy and
+  would introduce a second policy that stakeholders did not request.
+- Agent evaluation remains executable automated tests rather than a production
+  dashboard. This keeps reviewer-facing UI focused on the sales workflow.
+- The assistant creates only an internal task after approval. It does not send an
+  email, contact the client, or approve technical work.
+
+### Verification
+
+```text
+34 automated tests pass
+Django system check passes
+No model changes are missing from migrations
+./verify.sh passes unchanged
+Clean import: 10,000 companies, 20,000 contacts, 16 fair editions,
+              15,000 opportunities and 40,000 activities
+Restart: no migrations to apply; legacy archive already imported, skipping
+```
+
+## Remaining project phase
 
 ### Phase 8 — README, demo, and submission
 

@@ -9,7 +9,58 @@
     </div>
     <p>{{ handoff_run.decision_reason }}</p>
     <div class="next-action"><span>Next action</span><strong>{{ handoff_run.next_action }}</strong></div>
+    <div class="approval-action">
+      {% if handoff_run.approved_follow_up %}
+        <span>Approved by sales</span>
+        <strong>Follow-up scheduled for {{ handoff_run.approved_follow_up.follow_up_on|date:"j M Y" }}</strong>
+      {% else %}
+        <a class="button button-secondary" href="{% url 'crm:handoff-follow-up-create' handoff_run.opportunity.opportunity_code handoff_run.pk %}">Review and create follow-up</a>
+        <small>No CRM task is created without confirmation.</small>
+      {% endif %}
+    </div>
   </div>
+
+  {% if comparison %}
+    <section class="run-comparison">
+      <div class="comparison-heading">
+        <div>
+          <p class="eyebrow">Feedback loop</p>
+          <h3>Changes since run #{{ comparison.previous_run.pk }}</h3>
+        </div>
+        <div class="decision-transition">
+          <span class="decision-text decision-text-{{ comparison.previous_run.coordinator_decision|lower }}">{{ comparison.previous_run.coordinator_decision }}</span>
+          <span aria-hidden="true">→</span>
+          <strong class="decision-text decision-text-{{ handoff_run.coordinator_decision|lower }}">{{ handoff_run.coordinator_decision }}</strong>
+        </div>
+      </div>
+
+      {% if comparison.changes %}
+        <div class="change-list">
+          {% for change in comparison.changes %}
+            <div class="change-row">
+              <strong>{{ change.label }}</strong>
+              <span>{{ change.before }}</span>
+              <span aria-hidden="true">→</span>
+              <span>{{ change.after }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="no-change-note">No decision-relevant input changed; this rerun confirms deterministic output.</p>
+      {% endif %}
+
+      {% if comparison.resolved_reason_codes or comparison.new_reason_codes %}
+        <div class="reason-delta">
+          {% if comparison.resolved_reason_codes %}
+            <div><span>Resolved</span><strong>{{ comparison.resolved_reason_codes|join:", " }}</strong></div>
+          {% endif %}
+          {% if comparison.new_reason_codes %}
+            <div><span>New</span><strong>{{ comparison.new_reason_codes|join:", " }}</strong></div>
+          {% endif %}
+        </div>
+      {% endif %}
+    </section>
+  {% endif %}
 
   <div class="role-grid">
     <section class="role-card">
@@ -48,7 +99,16 @@
         {% for check in handoff_run.checker_output.checks %}
           <div class="check-row check-{{ check.status|lower }}">
             <span>{{ check.status }}</span>
-            <div><strong>{{ check.label }}</strong><small>{{ check.detail }}</small></div>
+            <div>
+              <strong>{{ check.label }}</strong><small>{{ check.detail }}</small>
+              {% if check.evidence %}
+                <div class="evidence-list">
+                  {% for evidence in check.evidence %}
+                    <span><b>{{ evidence.source }}</b> · {{ evidence.field }} = {{ evidence.value|default:"Missing" }}</span>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
           </div>
         {% endfor %}
       </div>
@@ -56,7 +116,16 @@
         <div class="blocking-list">
           <h4>Blocking issues</h4>
           {% for issue in handoff_run.checker_output.blocking_issues %}
-            <p><strong>{{ issue.code }}</strong> {{ issue.message }}</p>
+            <div class="blocking-issue">
+              <p><strong>{{ issue.code }}</strong> {{ issue.message }}</p>
+              {% if issue.evidence %}
+                <div class="evidence-list">
+                  {% for evidence in issue.evidence %}
+                    <span><b>{{ evidence.source }}</b> · {{ evidence.field }} = {{ evidence.value|default:"Missing" }}</span>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
           {% endfor %}
         </div>
       {% endif %}

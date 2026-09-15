@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Review assistant action · {{ opportunity.opportunity_code }}{% endblock %}
+
+{% block content %}
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="{% url 'crm:home' %}">Follow-ups</a><span>/</span>
+    <a href="{% url 'crm:company-detail' opportunity.company.company_code %}">{{ opportunity.company.name }}</a><span>/</span>
+    <a href="{% url 'crm:opportunity-detail' opportunity.opportunity_code %}">{{ opportunity.opportunity_code }}</a><span>/</span>
+    <span>Review assistant action</span>
+  </nav>
+
+  <div class="form-layout">
+    <section class="form-heading">
+      <p class="eyebrow">{{ assistant_label }} · human approval</p>
+      <h1>Review recommended action</h1>
+      <p class="lede">The assistant proposes an action; nothing is scheduled until you review and confirm it.</p>
+      <div class="form-context">
+        <span>Handoff run #{{ handoff_run.pk }}</span>
+        <strong>{{ handoff_run.coordinator_decision }}</strong>
+        <small>{{ handoff_run.reason_codes|join:", " }}</small>
+      </div>
+    </section>
+
+    <section class="panel form-panel">
+      <div class="recommendation-context">
+        <p class="eyebrow">Coordinator recommendation</p>
+        <p>{{ handoff_run.next_action }}</p>
+        <small>Source: immutable handoff run #{{ handoff_run.pk }}</small>
+      </div>
+
+      {% if existing_follow_up %}
+        <div class="success-banner" role="status">
+          This recommendation was already approved for {{ existing_follow_up.follow_up_on|date:"j M Y" }}.
+        </div>
+        <div class="form-actions">
+          <a class="button button-primary" href="{% url 'crm:opportunity-detail' opportunity.opportunity_code %}#activity">Back to opportunity</a>
+        </div>
+      {% else %}
+        <form method="post">
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="form-errors" role="alert">{{ form.non_field_errors }}</div>
+          {% endif %}
+          <div class="form-fields">
+            {% for field in form %}
+              <div class="form-field{% if field.errors %} field-invalid{% endif %}">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}<small class="help-text">{{ field.help_text }}</small>{% endif %}
+                {% for error in field.errors %}<p class="field-error" role="alert">{{ error }}</p>{% endfor %}
+              </div>
+            {% endfor %}
+          </div>
+          <p class="approval-note">By confirming, you approve creating one pending CRM task linked to this assistant run.</p>
+          <div class="form-actions">
+            <a class="button button-quiet" href="{% url 'crm:opportunity-detail' opportunity.opportunity_code %}#technical-handoff">Cancel</a>
+            <button class="button button-primary" type="submit">Approve and schedule</button>
+          </div>
+        </form>
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}

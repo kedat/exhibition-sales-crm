@@ -20,6 +20,10 @@ FIELD_LABELS = {
 }
 
 
+def _evidence(source: str, field: str, value) -> dict:
+    return {"source": source, "field": field, "value": value}
+
+
 def _decimal_value(value: Decimal | None) -> str | None:
     return f"{value:.2f}" if value is not None else None
 
@@ -163,9 +167,12 @@ def check_brief(snapshot: dict, preparer_output: dict) -> dict:
     area = opportunity["stand_area_sqm"]
     requested_height = opportunity["requested_height_m"]
     maximum_height = fair["max_stand_height_m"]
+    opportunity_source = f"Opportunity {opportunity['code']}"
+    fair_source = f"Fair edition {fair['code']}"
     checks = []
     blocking_issues = []
 
+    area_evidence = [_evidence(opportunity_source, "stand_area_sqm", area)]
     if area is None:
         checks.append(
             {
@@ -173,6 +180,7 @@ def check_brief(snapshot: dict, preparer_output: dict) -> dict:
                 "label": "Allocated stand area",
                 "status": "FAIL",
                 "detail": "The allocated stand area is missing.",
+                "evidence": area_evidence,
             }
         )
         blocking_issues.append(
@@ -180,6 +188,7 @@ def check_brief(snapshot: dict, preparer_output: dict) -> dict:
                 "code": "MISSING_STAND_AREA",
                 "field": "stand_area_sqm",
                 "message": "Allocated stand area is required before technical work begins.",
+                "evidence": area_evidence,
             }
         )
     else:
@@ -188,10 +197,14 @@ def check_brief(snapshot: dict, preparer_output: dict) -> dict:
                 "code": "STAND_AREA_PRESENT",
                 "label": "Allocated stand area",
                 "status": "PASS",
-                "detail": f"Allocated area: {area} m².",
+                "detail": f"Allocated area: {area} square metres.",
+                "evidence": area_evidence,
             }
         )
 
+    height_evidence = [
+        _evidence(opportunity_source, "requested_height_m", requested_height)
+    ]
     if requested_height is None:
         checks.append(
             {
@@ -199,6 +212,7 @@ def check_brief(snapshot: dict, preparer_output: dict) -> dict:
                 "label": "Requested height",
                 "status": "FAIL",
                 "detail": "The requested height is missing.",
+                "evidence": height_evidence,
             }
         )
         blocking_issues.append(
@@ -206,6 +220,7 @@ def check_brief(snapshot: dict, preparer_output: dict) -> dict:
                 "code": "MISSING_REQUESTED_HEIGHT",
                 "field": "requested_height_m",
                 "message": "Requested height is required before technical work begins.",
+                "evidence": height_evidence,
             }
         )
     else:
@@ -215,9 +230,11 @@ def check_brief(snapshot: dict, preparer_output: dict) -> dict:
                 "label": "Requested height",
                 "status": "PASS",
                 "detail": f"Requested height: {requested_height} m.",
+                "evidence": height_evidence,
             }
         )
 
+    fair_evidence = [_evidence(fair_source, "max_stand_height_m", maximum_height)]
     if maximum_height is None:
         checks.append(
             {
@@ -225,6 +242,7 @@ def check_brief(snapshot: dict, preparer_output: dict) -> dict:
                 "label": "Fair maximum height",
                 "status": "FAIL",
                 "detail": "The fair maximum height is unavailable.",
+                "evidence": fair_evidence,
             }
         )
         blocking_issues.append(
@@ -232,6 +250,7 @@ def check_brief(snapshot: dict, preparer_output: dict) -> dict:
                 "code": "MISSING_FAIR_HEIGHT_LIMIT",
                 "field": "max_stand_height_m",
                 "message": "The requested height cannot be checked without a fair limit.",
+                "evidence": fair_evidence,
             }
         )
     else:
@@ -241,10 +260,12 @@ def check_brief(snapshot: dict, preparer_output: dict) -> dict:
                 "label": "Fair maximum height",
                 "status": "PASS",
                 "detail": f"Fair maximum height: {maximum_height} m.",
+                "evidence": fair_evidence,
             }
         )
         if requested_height is not None:
             within_limit = Decimal(requested_height) <= Decimal(maximum_height)
+            comparison_evidence = [*height_evidence, *fair_evidence]
             checks.append(
                 {
                     "code": "HEIGHT_WITHIN_FAIR_LIMIT",
@@ -253,6 +274,7 @@ def check_brief(snapshot: dict, preparer_output: dict) -> dict:
                     "detail": (
                         f"Requested {requested_height} m; fair maximum {maximum_height} m."
                     ),
+                    "evidence": comparison_evidence,
                 }
             )
             if not within_limit:
@@ -264,6 +286,7 @@ def check_brief(snapshot: dict, preparer_output: dict) -> dict:
                             f"Requested height {requested_height} m exceeds the fair "
                             f"maximum of {maximum_height} m."
                         ),
+                        "evidence": comparison_evidence,
                     }
                 )
 

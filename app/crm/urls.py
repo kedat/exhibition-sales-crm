@@ -43,5 +43,10 @@ urlpatterns = [
         views.handoff_run_detail,
         name="handoff-run-detail",
     ),
+    path(
+        "opportunities/<str:opportunity_code>/handoffs/<int:run_id>/follow-up/",
+        views.handoff_follow_up_create,
+        name="handoff-follow-up-create",
+    ),
     path("health/", views.health, name="health"),
 ]
