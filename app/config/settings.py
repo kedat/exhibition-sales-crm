@@ -13,6 +13,7 @@ ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
+    "django.contrib.postgres",
     "django.contrib.staticfiles",
     "crm",
 ]
