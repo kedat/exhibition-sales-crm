@@ -1,0 +1,65 @@
+<div class="handoff-result">
+  <div class="decision-block decision-{{ handoff_run.coordinator_decision|lower }}">
+    <div>
+      <p class="eyebrow">Coordinator decision</p>
+      <strong>{{ handoff_run.coordinator_decision }}</strong>
+    </div>
+    <div class="reason-codes">
+      {% for code in handoff_run.reason_codes %}<span>{{ code }}</span>{% endfor %}
+    </div>
+    <p>{{ handoff_run.decision_reason }}</p>
+    <div class="next-action"><span>Next action</span><strong>{{ handoff_run.next_action }}</strong></div>
+  </div>
+
+  <div class="role-grid">
+    <section class="role-card">
+      <div class="role-heading">
+        <span>01</span>
+        <div><h3>Preparer</h3><small>{{ handoff_run.preparer_output.responsibility }}</small></div>
+      </div>
+      <p>{{ handoff_run.preparer_output.summary }}</p>
+      <div class="proposal-box">
+        <span>{{ handoff_run.preparer_output.proposal_code }}</span>
+        <p>{{ handoff_run.preparer_output.proposal }}</p>
+      </div>
+      <div class="field-status-grid">
+        <div>
+          <h4>Known</h4>
+          <ul class="status-list known-list">
+            {% for field in handoff_run.preparer_output.known_fields %}<li>{{ field.label }}</li>{% empty %}<li>None</li>{% endfor %}
+          </ul>
+        </div>
+        <div>
+          <h4>Missing</h4>
+          <ul class="status-list missing-list">
+            {% for field in handoff_run.preparer_output.missing_fields %}<li>{{ field.label }}</li>{% empty %}<li>None</li>{% endfor %}
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="role-card">
+      <div class="role-heading">
+        <span>02</span>
+        <div><h3>Checker</h3><small>{{ handoff_run.checker_output.responsibility }}</small></div>
+      </div>
+      <p>{{ handoff_run.checker_output.summary }}</p>
+      <div class="check-list">
+        {% for check in handoff_run.checker_output.checks %}
+          <div class="check-row check-{{ check.status|lower }}">
+            <span>{{ check.status }}</span>
+            <div><strong>{{ check.label }}</strong><small>{{ check.detail }}</small></div>
+          </div>
+        {% endfor %}
+      </div>
+      {% if handoff_run.checker_output.blocking_issues %}
+        <div class="blocking-list">
+          <h4>Blocking issues</h4>
+          {% for issue in handoff_run.checker_output.blocking_issues %}
+            <p><strong>{{ issue.code }}</strong> {{ issue.message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </section>
+  </div>
+</div>

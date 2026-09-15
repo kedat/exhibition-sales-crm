@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Handoff run #{{ handoff_run.pk }} · {{ opportunity.opportunity_code }}{% endblock %}
+
+{% block content %}
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="{% url 'crm:home' %}">Follow-ups</a><span>/</span>
+    <a href="{% url 'crm:company-detail' opportunity.company.company_code %}">{{ opportunity.company.name }}</a><span>/</span>
+    <a href="{% url 'crm:opportunity-detail' opportunity.opportunity_code %}">{{ opportunity.opportunity_code }}</a><span>/</span>
+    <span>Handoff run #{{ handoff_run.pk }}</span>
+  </nav>
+
+  <section class="record-heading handoff-record-heading">
+    <div>
+      <p class="eyebrow">{{ assistant_label }} · immutable history</p>
+      <h1>Handoff run #{{ handoff_run.pk }}</h1>
+      <p class="lede">Recorded {{ handoff_run.created_at|date:"j M Y, H:i" }} for {{ opportunity.company.name }}.</p>
+    </div>
+    <a class="button button-secondary" href="{% url 'crm:opportunity-detail' opportunity.opportunity_code %}#technical-handoff">Back to opportunity</a>
+  </section>
+
+  <section class="panel handoff-panel">
+    {% include "crm/_handoff_run.html" with handoff_run=handoff_run %}
+  </section>
+
+  <section class="panel snapshot-panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Inputs used for this run</p>
+        <h2>Immutable snapshot</h2>
+      </div>
+      <span class="local-badge">Policy {{ handoff_run.input_snapshot.policy.id }}</span>
+    </div>
+    <div class="snapshot-grid">
+      <div>
+        <h3>Customer</h3>
+        <dl class="snapshot-fields">
+          <div><dt>Company</dt><dd>{{ handoff_run.input_snapshot.company.name }}</dd></div>
+          <div><dt>Company code</dt><dd>{{ handoff_run.input_snapshot.company.code }}</dd></div>
+          <div><dt>Primary contact</dt><dd>{{ handoff_run.input_snapshot.primary_contact.name|default:"Not provided" }}</dd></div>
+          <div><dt>Sales representative</dt><dd>{{ handoff_run.input_snapshot.company.sales_rep|default:"Not assigned" }}</dd></div>
+        </dl>
+      </div>
+      <div>
+        <h3>Opportunity</h3>
+        <dl class="snapshot-fields">
+          <div><dt>Client budget</dt><dd>{% if handoff_run.input_snapshot.opportunity.client_budget_eur %}€{{ handoff_run.input_snapshot.opportunity.client_budget_eur }}{% else %}Unknown{% endif %}</dd></div>
+          <div><dt>Allocated area</dt><dd>{% if handoff_run.input_snapshot.opportunity.stand_area_sqm %}{{ handoff_run.input_snapshot.opportunity.stand_area_sqm }} m²{% else %}Unknown{% endif %}</dd></div>
+          <div><dt>Requested height</dt><dd>{% if handoff_run.input_snapshot.opportunity.requested_height_m %}{{ handoff_run.input_snapshot.opportunity.requested_height_m }} m{% else %}Unknown{% endif %}</dd></div>
+          <div><dt>Brief notes</dt><dd>{{ handoff_run.input_snapshot.opportunity.brief_notes|default:"Not provided" }}</dd></div>
+        </dl>
+      </div>
+      <div>
+        <h3>Fair edition</h3>
+        <dl class="snapshot-fields">
+          <div><dt>Edition</dt><dd>{{ handoff_run.input_snapshot.fair_edition.name }} · {{ handoff_run.input_snapshot.fair_edition.code }}</dd></div>
+          <div><dt>Dates</dt><dd>{{ handoff_run.input_snapshot.fair_edition.starts_on }} – {{ handoff_run.input_snapshot.fair_edition.ends_on }}</dd></div>
+          <div><dt>Venue</dt><dd>{{ handoff_run.input_snapshot.fair_edition.venue }}, {{ handoff_run.input_snapshot.fair_edition.city }}</dd></div>
+          <div><dt>Maximum height</dt><dd>{{ handoff_run.input_snapshot.fair_edition.max_stand_height_m }} m</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+{% endblock %}

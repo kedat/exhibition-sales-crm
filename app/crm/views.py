@@ -5,9 +5,11 @@ from django.db.models.functions import Lower
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from crm.forms import ConversationForm, FollowUpForm, OpportunityUpdateForm
-from crm.models import Activity, Company, Contact, Opportunity
+from crm.models import Activity, Company, Contact, HandoffRun, Opportunity
+from crm.services.handoff import ASSISTANT_LABEL, run_handoff
 
 
 FOLLOW_UP_PREVIEW_LIMIT = 8
@@ -148,6 +150,7 @@ def opportunity_detail(request, opportunity_code):
     activities = opportunity.activities.select_related("company").order_by(
         "-occurred_at"
     )
+    handoff_history = list(opportunity.handoff_runs.all())
 
     return render(
         request,
@@ -156,6 +159,9 @@ def opportunity_detail(request, opportunity_code):
             "opportunity": opportunity,
             "activities": activities,
             "saved_action": request.GET.get("saved"),
+            "assistant_label": ASSISTANT_LABEL,
+            "latest_handoff": handoff_history[0] if handoff_history else None,
+            "handoff_history": handoff_history,
         },
     )
 
@@ -260,6 +266,39 @@ def follow_up_create(request, opportunity_code):
                 "Create a pending task for this company and opportunity."
             ),
             "submit_label": "Schedule follow-up",
+        },
+    )
+
+
+@require_POST
+def handoff_create(request, opportunity_code):
+    opportunity = get_object_or_404(
+        Opportunity.objects.select_related(
+            "company", "primary_contact", "fair_edition"
+        ),
+        opportunity_code=opportunity_code,
+    )
+    run_handoff(opportunity)
+    return redirect(
+        f"{opportunity.get_absolute_url()}?saved=handoff#technical-handoff"
+    )
+
+
+def handoff_run_detail(request, opportunity_code, run_id):
+    handoff_run = get_object_or_404(
+        HandoffRun.objects.select_related(
+            "opportunity", "opportunity__company", "opportunity__fair_edition"
+        ),
+        pk=run_id,
+        opportunity__opportunity_code=opportunity_code,
+    )
+    return render(
+        request,
+        "crm/handoff_run_detail.html",
+        {
+            "opportunity": handoff_run.opportunity,
+            "handoff_run": handoff_run,
+            "assistant_label": ASSISTANT_LABEL,
         },
     )
 

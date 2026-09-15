@@ -15,6 +15,8 @@
     <div class="success-banner" role="status">Conversation recorded in the timeline.</div>
   {% elif saved_action == "follow-up" %}
     <div class="success-banner" role="status">Follow-up scheduled and available on the dashboard.</div>
+  {% elif saved_action == "handoff" %}
+    <div class="success-banner" role="status">A new deterministic handoff run was saved.</div>
   {% endif %}
 
   <section class="record-heading opportunity-heading">
@@ -46,6 +48,38 @@
         </div>
       </section>
 
+      <section class="panel handoff-panel" id="technical-handoff">
+        <div class="panel-heading handoff-heading">
+          <div>
+            <p class="eyebrow">{{ assistant_label }}</p>
+            <h2>Technical handoff</h2>
+          </div>
+          <span class="local-badge">No model or API</span>
+        </div>
+        {% if latest_handoff %}
+          {% include "crm/_handoff_run.html" with handoff_run=latest_handoff %}
+        {% else %}
+          <div class="empty-state handoff-empty">
+            <h3>No handoff has been prepared yet</h3>
+            <p>Run the local assistant to prepare the brief, check it and record a decision.</p>
+          </div>
+        {% endif %}
+
+        {% if handoff_history %}
+          <div class="handoff-history">
+            <h3>Run history</h3>
+            <div class="history-list">
+              {% for run in handoff_history %}
+                <a href="{% url 'crm:handoff-run-detail' opportunity.opportunity_code run.pk %}">
+                  <span>Run #{{ run.pk }} · {{ run.created_at|date:"j M Y, H:i" }}</span>
+                  <strong class="decision-text decision-text-{{ run.coordinator_decision|lower }}">{{ run.coordinator_decision }}</strong>
+                </a>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+      </section>
+
       <section class="panel">
         <div class="panel-heading"><h2>Opportunity activity</h2></div>
         {% include "crm/_activity_timeline.html" with activities=activities empty_message="No activity for this opportunity." %}
@@ -74,8 +108,12 @@
           <a class="button button-secondary" href="{% url 'crm:follow-up-create' opportunity.opportunity_code %}">Schedule follow-up</a>
         </div>
         <div class="future-action">
-          <span>Phase 6</span>
-          <button type="button" disabled>Prepare technical handoff</button>
+          <span>{{ assistant_label }}</span>
+          <form method="post" action="{% url 'crm:handoff-create' opportunity.opportunity_code %}">
+            {% csrf_token %}
+            <button type="submit">{% if latest_handoff %}Run handoff again{% else %}Prepare technical handoff{% endif %}</button>
+          </form>
+          <small>Creates a new immutable, auditable run.</small>
         </div>
       </section>
     </aside>

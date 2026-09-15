@@ -285,8 +285,8 @@ class Activity(models.Model):
 
 class HandoffRun(models.Model):
     class Decision(models.TextChoices):
-        CONTINUE = "continue", "Continue"
-        STOP = "stop", "Stop"
+        CONTINUE = "CONTINUE", "Continue"
+        STOP = "STOP", "Stop"
 
     opportunity = models.ForeignKey(
         Opportunity,
@@ -297,6 +297,7 @@ class HandoffRun(models.Model):
     preparer_output = models.JSONField()
     checker_output = models.JSONField()
     coordinator_decision = models.CharField(max_length=16, choices=Decision.choices)
+    reason_codes = models.JSONField(default=list)
     decision_reason = models.TextField()
     next_action = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
