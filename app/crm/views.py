@@ -3,9 +3,10 @@ from django.db import connection
 from django.db.models import Count, Prefetch, Subquery
 from django.db.models.functions import Lower
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from crm.forms import ConversationForm, FollowUpForm, OpportunityUpdateForm
 from crm.models import Activity, Company, Contact, Opportunity
 
 
@@ -57,17 +58,27 @@ def home(request):
         "follow_up_on", "occurred_at"
     )
 
+    overdue_page = Paginator(overdue, FOLLOW_UP_PREVIEW_LIMIT).get_page(
+        request.GET.get("overdue_page")
+    )
+    due_today_page = Paginator(due_today, FOLLOW_UP_PREVIEW_LIMIT).get_page(
+        request.GET.get("today_page")
+    )
+    upcoming_page = Paginator(upcoming, FOLLOW_UP_PREVIEW_LIMIT).get_page(
+        request.GET.get("upcoming_page")
+    )
+
     return render(
         request,
         "crm/home.html",
         {
             "today": today,
-            "overdue": overdue[:FOLLOW_UP_PREVIEW_LIMIT],
-            "overdue_count": overdue.count(),
-            "due_today": due_today[:FOLLOW_UP_PREVIEW_LIMIT],
-            "due_today_count": due_today.count(),
-            "upcoming": upcoming[:FOLLOW_UP_PREVIEW_LIMIT],
-            "upcoming_count": upcoming.count(),
+            "overdue": overdue_page,
+            "overdue_count": overdue_page.paginator.count,
+            "due_today": due_today_page,
+            "due_today_count": due_today_page.paginator.count,
+            "upcoming": upcoming_page,
+            "upcoming_count": upcoming_page.paginator.count,
         },
     )
 
@@ -141,7 +152,115 @@ def opportunity_detail(request, opportunity_code):
     return render(
         request,
         "crm/opportunity_detail.html",
-        {"opportunity": opportunity, "activities": activities},
+        {
+            "opportunity": opportunity,
+            "activities": activities,
+            "saved_action": request.GET.get("saved"),
+        },
+    )
+
+
+def opportunity_edit(request, opportunity_code):
+    opportunity = get_object_or_404(
+        Opportunity.objects.select_related("company", "fair_edition"),
+        opportunity_code=opportunity_code,
+    )
+    form = OpportunityUpdateForm(
+        request.POST or None,
+        instance=opportunity,
+    )
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        return redirect(
+            f"{opportunity.get_absolute_url()}?saved=opportunity"
+        )
+
+    return render(
+        request,
+        "crm/form_page.html",
+        {
+            "opportunity": opportunity,
+            "form": form,
+            "eyebrow": "Opportunity",
+            "heading": "Edit commercial brief",
+            "description": (
+                "Update the sales information used by the technical handoff."
+            ),
+            "submit_label": "Save opportunity",
+        },
+    )
+
+
+def conversation_create(request, opportunity_code):
+    opportunity = get_object_or_404(
+        Opportunity.objects.select_related("company"),
+        opportunity_code=opportunity_code,
+    )
+    initial = {"occurred_at": timezone.localtime().replace(second=0, microsecond=0)}
+    form = ConversationForm(request.POST or None, initial=initial)
+    if request.method == "POST" and form.is_valid():
+        Activity.objects.create(
+            company=opportunity.company,
+            opportunity=opportunity,
+            activity_type=form.cleaned_data["activity_type"],
+            occurred_at=form.cleaned_data["occurred_at"],
+            details=form.cleaned_data["details"],
+            follow_up_on=form.cleaned_data["follow_up_on"],
+            completion_marker=Activity.CompletionMarker.COMPLETED,
+        )
+        return redirect(
+            f"{opportunity.get_absolute_url()}?saved=conversation"
+        )
+
+    return render(
+        request,
+        "crm/form_page.html",
+        {
+            "opportunity": opportunity,
+            "form": form,
+            "eyebrow": "Customer contact",
+            "heading": "Record conversation",
+            "description": (
+                "Log a completed call, email or meeting on this opportunity."
+            ),
+            "submit_label": "Record conversation",
+        },
+    )
+
+
+def follow_up_create(request, opportunity_code):
+    opportunity = get_object_or_404(
+        Opportunity.objects.select_related("company"),
+        opportunity_code=opportunity_code,
+    )
+    form = FollowUpForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        Activity.objects.create(
+            company=opportunity.company,
+            opportunity=opportunity,
+            activity_type=Activity.ActivityType.TASK,
+            occurred_at=timezone.now(),
+            details=form.cleaned_data["details"],
+            follow_up_on=form.cleaned_data["follow_up_on"],
+            completion_marker=Activity.CompletionMarker.PENDING,
+        )
+        return redirect(
+            f"{opportunity.get_absolute_url()}?saved=follow-up"
+        )
+
+    return render(
+        request,
+        "crm/form_page.html",
+        {
+            "opportunity": opportunity,
+            "form": form,
+            "eyebrow": "Next action",
+            "heading": "Schedule follow-up",
+            "description": (
+                "Create a pending task for this company and opportunity."
+            ),
+            "submit_label": "Schedule follow-up",
+        },
     )
 
 

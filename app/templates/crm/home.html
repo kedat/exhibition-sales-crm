@@ -25,6 +25,13 @@
         <span class="count-badge">{{ overdue_count }}</span>
       </div>
       {% include "crm/_follow_up_list.html" with activities=overdue empty_message="No overdue follow-ups." %}
+      {% if overdue.paginator.num_pages > 1 %}
+        <nav class="bucket-pagination" aria-label="Overdue pages">
+          {% if overdue.has_previous %}<a href="?overdue_page={{ overdue.previous_page_number }}&amp;today_page={{ due_today.number }}&amp;upcoming_page={{ upcoming.number }}">←</a>{% else %}<span>←</span>{% endif %}
+          <small>{{ overdue.number }} / {{ overdue.paginator.num_pages }}</small>
+          {% if overdue.has_next %}<a href="?overdue_page={{ overdue.next_page_number }}&amp;today_page={{ due_today.number }}&amp;upcoming_page={{ upcoming.number }}">→</a>{% else %}<span>→</span>{% endif %}
+        </nav>
+      {% endif %}
     </section>
 
     <section class="panel panel-primary">
@@ -36,6 +43,13 @@
         <span class="count-badge">{{ due_today_count }}</span>
       </div>
       {% include "crm/_follow_up_list.html" with activities=due_today empty_message="Nothing due today." %}
+      {% if due_today.paginator.num_pages > 1 %}
+        <nav class="bucket-pagination" aria-label="Due today pages">
+          {% if due_today.has_previous %}<a href="?overdue_page={{ overdue.number }}&amp;today_page={{ due_today.previous_page_number }}&amp;upcoming_page={{ upcoming.number }}">←</a>{% else %}<span>←</span>{% endif %}
+          <small>{{ due_today.number }} / {{ due_today.paginator.num_pages }}</small>
+          {% if due_today.has_next %}<a href="?overdue_page={{ overdue.number }}&amp;today_page={{ due_today.next_page_number }}&amp;upcoming_page={{ upcoming.number }}">→</a>{% else %}<span>→</span>{% endif %}
+        </nav>
+      {% endif %}
     </section>
 
     <section class="panel">
@@ -47,6 +61,13 @@
         <span class="count-badge">{{ upcoming_count }}</span>
       </div>
       {% include "crm/_follow_up_list.html" with activities=upcoming empty_message="No upcoming follow-ups." %}
+      {% if upcoming.paginator.num_pages > 1 %}
+        <nav class="bucket-pagination" aria-label="Upcoming pages">
+          {% if upcoming.has_previous %}<a href="?overdue_page={{ overdue.number }}&amp;today_page={{ due_today.number }}&amp;upcoming_page={{ upcoming.previous_page_number }}">←</a>{% else %}<span>←</span>{% endif %}
+          <small>{{ upcoming.number }} / {{ upcoming.paginator.num_pages }}</small>
+          {% if upcoming.has_next %}<a href="?overdue_page={{ overdue.number }}&amp;today_page={{ due_today.number }}&amp;upcoming_page={{ upcoming.next_page_number }}">→</a>{% else %}<span>→</span>{% endif %}
+        </nav>
+      {% endif %}
     </section>
   </div>
 {% endblock %}

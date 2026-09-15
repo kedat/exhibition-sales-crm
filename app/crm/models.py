@@ -2,6 +2,7 @@ from django.contrib.postgres.indexes import GinIndex, OpClass
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.functions import Lower
+from django.urls import reverse
 
 
 class Company(models.Model):
@@ -206,6 +207,9 @@ class Opportunity(models.Model):
 
     def __str__(self) -> str:
         return f"{self.opportunity_code} — {self.description or 'Untitled opportunity'}"
+
+    def get_absolute_url(self) -> str:
+        return reverse("crm:opportunity-detail", args=[self.opportunity_code])
 
 
 class Activity(models.Model):

@@ -9,6 +9,14 @@
     <span>{{ opportunity.opportunity_code }}</span>
   </nav>
 
+  {% if saved_action == "opportunity" %}
+    <div class="success-banner" role="status">Opportunity updated successfully.</div>
+  {% elif saved_action == "conversation" %}
+    <div class="success-banner" role="status">Conversation recorded in the timeline.</div>
+  {% elif saved_action == "follow-up" %}
+    <div class="success-banner" role="status">Follow-up scheduled and available on the dashboard.</div>
+  {% endif %}
+
   <section class="record-heading opportunity-heading">
     <div>
       <div class="heading-badges">
@@ -56,11 +64,19 @@
         </dl>
       </section>
 
-      <section class="panel action-placeholder">
-        <p class="eyebrow">Next phases</p>
+      <section class="panel action-panel">
+        <p class="eyebrow">Sales workflow</p>
         <h2>Opportunity actions</h2>
-        <p>Editing, conversation logging and technical handoff will be available here.</p>
-        <button type="button" disabled>Prepare technical handoff</button>
+        <p>Keep the brief and customer history current before involving Technical.</p>
+        <div class="action-list">
+          <a class="button button-primary" href="{% url 'crm:opportunity-edit' opportunity.opportunity_code %}">Edit opportunity</a>
+          <a class="button button-secondary" href="{% url 'crm:conversation-create' opportunity.opportunity_code %}">Record conversation</a>
+          <a class="button button-secondary" href="{% url 'crm:follow-up-create' opportunity.opportunity_code %}">Schedule follow-up</a>
+        </div>
+        <div class="future-action">
+          <span>Phase 6</span>
+          <button type="button" disabled>Prepare technical handoff</button>
+        </div>
       </section>
     </aside>
   </div>
