@@ -2,6 +2,7 @@
 set -eu
 
 python manage.py migrate --noinput
+python manage.py import_legacy_data --data-dir /app/data
 python manage.py collectstatic --noinput --clear
 
 exec gunicorn config.wsgi:application \
