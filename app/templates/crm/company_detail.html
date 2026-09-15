@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}{{ company.name }} · Exhibition Sales CRM{% endblock %}
+
+{% block content %}
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="{% url 'crm:home' %}">Follow-ups</a><span>/</span><span>{{ company.company_code }}</span>
+  </nav>
+
+  <section class="record-heading">
+    <div>
+      <p class="record-code">{{ company.company_code }}</p>
+      <h1>{{ company.name }}</h1>
+      <p class="lede">
+        {{ company.region|default:"Region unavailable" }}
+        {% if company.province_code %} · {{ company.province_code }}{% endif %}
+      </p>
+    </div>
+    <dl class="record-summary">
+      <div><dt>Sales representative</dt><dd>{{ company.sales_rep|default:"Not assigned" }}</dd></div>
+      <div><dt>Contacts</dt><dd>{{ company.contacts.all|length }}</dd></div>
+      <div><dt>Opportunities</dt><dd>{{ company.opportunities.all|length }}</dd></div>
+    </dl>
+  </section>
+
+  <div class="detail-grid">
+    <section class="panel detail-main">
+      <div class="panel-heading"><h2>Opportunities</h2></div>
+      <div class="opportunity-list">
+        {% for opportunity in company.opportunities.all %}
+          <article class="opportunity-row">
+            <div>
+              <p class="record-code">{{ opportunity.opportunity_code }}</p>
+              <h3><a href="{% url 'crm:opportunity-detail' opportunity.opportunity_code %}">{{ opportunity.description|default:"Untitled opportunity" }}</a></h3>
+              <p class="muted">
+                {{ opportunity.fair_edition.fair_name }} ·
+                {{ opportunity.fair_edition.fair_edition_code }} ·
+                {{ opportunity.fair_edition.starts_on|date:"j M Y" }}
+              </p>
+            </div>
+            <div class="opportunity-values">
+              <span class="status-pill status-{{ opportunity.sales_status }}">{{ opportunity.get_sales_status_display }}</span>
+              <strong>{% if opportunity.amount_eur != None %}€{{ opportunity.amount_eur|floatformat:2 }}{% else %}—{% endif %}</strong>
+            </div>
+          </article>
+        {% empty %}
+          <p class="empty-state">No opportunities recorded.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <aside class="detail-sidebar">
+      <section class="panel">
+        <div class="panel-heading"><h2>Contacts</h2></div>
+        <div class="contact-list">
+          {% for contact in company.contacts.all %}
+            <article>
+              <h3>{{ contact.full_name|default:contact.contact_code }}</h3>
+              <p class="record-code">{{ contact.contact_code }}</p>
+              {% if contact.email %}<a href="mailto:{{ contact.email }}">{{ contact.email }}</a>{% endif %}
+              {% if contact.phone %}<p>{{ contact.phone }}</p>{% endif %}
+            </article>
+          {% empty %}
+            <p class="empty-state">No contacts recorded.</p>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading"><h2>Company activity</h2></div>
+        {% include "crm/_activity_timeline.html" with activities=company_activities empty_message="No company-level activity." %}
+      </section>
+    </aside>
+  </div>
+{% endblock %}

@@ -1,0 +1,20 @@
+<div class="timeline">
+  {% for activity in activities %}
+    <article class="timeline-item">
+      <span class="timeline-marker type-{{ activity.activity_type }}" aria-hidden="true"></span>
+      <div>
+        <div class="timeline-meta">
+          <span class="type-badge type-{{ activity.activity_type }}">{{ activity.get_activity_type_display }}</span>
+          <time datetime="{{ activity.occurred_at|date:'c' }}">{{ activity.occurred_at|date:"j M Y, H:i" }}</time>
+        </div>
+        <p>{{ activity.details }}</p>
+        <div class="context-line">
+          {% if activity.author %}<span>{{ activity.author }}</span>{% endif %}
+          {% if activity.follow_up_on %}<span>Follow up {{ activity.follow_up_on|date:"j M Y" }}</span>{% endif %}
+        </div>
+      </div>
+    </article>
+  {% empty %}
+    <p class="empty-state">{{ empty_message }}</p>
+  {% endfor %}
+</div>

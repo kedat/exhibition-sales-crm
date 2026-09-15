@@ -1,21 +1,52 @@
 {% extends "base.html" %}
 
-{% block title %}CRM foundation ready{% endblock %}
+{% block title %}Follow-ups · Exhibition Sales CRM{% endblock %}
 
 {% block content %}
-  <section class="hero">
-    <p class="eyebrow">Phase 1</p>
-    <h1>The CRM foundation is ready.</h1>
-    <p class="lede">
-      The application is running locally, connected to PostgreSQL, and ready
-      for the archive schema and importer.
-    </p>
-    <div class="status-card">
-      <span class="status-dot" aria-hidden="true"></span>
-      <div>
-        <strong>Application available</strong>
-        <p>Containerized Django service on port 3000</p>
-      </div>
+  <section class="page-heading">
+    <div>
+      <p class="eyebrow">Sales workspace</p>
+      <h1>Follow-ups</h1>
+      <p class="lede">Calls, emails, meetings, notes and tasks that need attention.</p>
+    </div>
+    <div class="date-card">
+      <span>Today</span>
+      <strong>{{ today|date:"j M Y" }}</strong>
     </div>
   </section>
+
+  <div class="follow-up-grid">
+    <section class="panel panel-danger">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Needs attention</p>
+          <h2>Overdue</h2>
+        </div>
+        <span class="count-badge">{{ overdue_count }}</span>
+      </div>
+      {% include "crm/_follow_up_list.html" with activities=overdue empty_message="No overdue follow-ups." %}
+    </section>
+
+    <section class="panel panel-primary">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Priority</p>
+          <h2>Due today</h2>
+        </div>
+        <span class="count-badge">{{ due_today_count }}</span>
+      </div>
+      {% include "crm/_follow_up_list.html" with activities=due_today empty_message="Nothing due today." %}
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Plan ahead</p>
+          <h2>Upcoming</h2>
+        </div>
+        <span class="count-badge">{{ upcoming_count }}</span>
+      </div>
+      {% include "crm/_follow_up_list.html" with activities=upcoming empty_message="No upcoming follow-ups." %}
+    </section>
+  </div>
 {% endblock %}

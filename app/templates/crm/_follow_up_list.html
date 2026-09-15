@@ -1,0 +1,34 @@
+<div class="follow-up-list">
+  {% for activity in activities %}
+    <article class="follow-up-item">
+      <div class="follow-up-meta">
+        <span class="type-badge type-{{ activity.activity_type }}">{{ activity.get_activity_type_display }}</span>
+        <time datetime="{{ activity.follow_up_on|date:'Y-m-d' }}">{{ activity.follow_up_on|date:"j M" }}</time>
+      </div>
+      <h3>
+        {% if activity.opportunity %}
+          <a href="{% url 'crm:opportunity-detail' activity.opportunity.opportunity_code %}">
+            {{ activity.company.name }}
+          </a>
+        {% else %}
+          <a href="{% url 'crm:company-detail' activity.company.company_code %}">
+            {{ activity.company.name }}
+          </a>
+        {% endif %}
+      </h3>
+      <p>{{ activity.details }}</p>
+      <div class="context-line">
+        {% if activity.opportunity %}
+          <span>{{ activity.opportunity.opportunity_code }}</span>
+          {% if activity.opportunity.primary_contact %}
+            <span>{{ activity.opportunity.primary_contact.full_name }}</span>
+          {% endif %}
+        {% else %}
+          <span>Company-level follow-up</span>
+        {% endif %}
+      </div>
+    </article>
+  {% empty %}
+    <p class="empty-state">{{ empty_message }}</p>
+  {% endfor %}
+</div>

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}{{ opportunity.opportunity_code }} · Exhibition Sales CRM{% endblock %}
+
+{% block content %}
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="{% url 'crm:home' %}">Follow-ups</a><span>/</span>
+    <a href="{% url 'crm:company-detail' opportunity.company.company_code %}">{{ opportunity.company.name }}</a><span>/</span>
+    <span>{{ opportunity.opportunity_code }}</span>
+  </nav>
+
+  <section class="record-heading opportunity-heading">
+    <div>
+      <div class="heading-badges">
+        <span class="record-code">{{ opportunity.opportunity_code }}</span>
+        <span class="status-pill status-{{ opportunity.sales_status }}">{{ opportunity.get_sales_status_display }}</span>
+      </div>
+      <h1>{{ opportunity.description|default:"Untitled opportunity" }}</h1>
+      <p class="lede"><a href="{% url 'crm:company-detail' opportunity.company.company_code %}">{{ opportunity.company.name }}</a></p>
+    </div>
+  </section>
+
+  <div class="detail-grid opportunity-grid">
+    <div class="detail-main">
+      <section class="panel">
+        <div class="panel-heading"><h2>Commercial brief</h2></div>
+        <dl class="field-grid">
+          <div><dt>Primary contact</dt><dd>{% if opportunity.primary_contact %}{{ opportunity.primary_contact.full_name }}{% else %}<span class="missing-value">Not provided</span>{% endif %}</dd></div>
+          <div><dt>Opportunity value</dt><dd>{% if opportunity.amount_eur != None %}€{{ opportunity.amount_eur|floatformat:2 }}{% else %}<span class="missing-value">Unknown</span>{% endif %}</dd></div>
+          <div><dt>Client budget</dt><dd>{% if opportunity.client_budget_eur != None %}€{{ opportunity.client_budget_eur|floatformat:2 }}{% else %}<span class="missing-value">Unknown</span>{% endif %}</dd></div>
+          <div><dt>Expected close</dt><dd>{{ opportunity.expected_close_on|date:"j M Y"|default:"Not set" }}</dd></div>
+          <div><dt>Allocated area</dt><dd>{% if opportunity.stand_area_sqm != None %}{{ opportunity.stand_area_sqm|floatformat:2 }} m²{% else %}<span class="missing-value">Unknown</span>{% endif %}</dd></div>
+          <div><dt>Requested height</dt><dd>{% if opportunity.requested_height_m != None %}{{ opportunity.requested_height_m|floatformat:2 }} m{% else %}<span class="missing-value">Unknown</span>{% endif %}</dd></div>
+        </dl>
+        <div class="notes-block">
+          <h3>Brief notes</h3>
+          <p>{{ opportunity.brief_notes|default:"No brief notes have been recorded." }}</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading"><h2>Opportunity activity</h2></div>
+        {% include "crm/_activity_timeline.html" with activities=activities empty_message="No activity for this opportunity." %}
+      </section>
+    </div>
+
+    <aside class="detail-sidebar">
+      <section class="panel fair-card">
+        <p class="eyebrow">Fair edition</p>
+        <h2>{{ opportunity.fair_edition.fair_name }}</h2>
+        <p class="record-code">{{ opportunity.fair_edition.fair_edition_code }}</p>
+        <dl class="stacked-fields">
+          <div><dt>Dates</dt><dd>{{ opportunity.fair_edition.starts_on|date:"j M" }}–{{ opportunity.fair_edition.ends_on|date:"j M Y" }}</dd></div>
+          <div><dt>Location</dt><dd>{{ opportunity.fair_edition.venue }}, {{ opportunity.fair_edition.city }}</dd></div>
+          <div><dt>Maximum stand height</dt><dd>{{ opportunity.fair_edition.max_stand_height_m|floatformat:2 }} m</dd></div>
+        </dl>
+      </section>
+
+      <section class="panel action-placeholder">
+        <p class="eyebrow">Next phases</p>
+        <h2>Opportunity actions</h2>
+        <p>Editing, conversation logging and technical handoff will be available here.</p>
+        <button type="button" disabled>Prepare technical handoff</button>
+      </section>
+    </aside>
+  </div>
+{% endblock %}

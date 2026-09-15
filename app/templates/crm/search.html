@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Search · Exhibition Sales CRM{% endblock %}
+
+{% block content %}
+  <section class="page-heading compact-heading">
+    <div>
+      <p class="eyebrow">CRM archive</p>
+      <h1>Search</h1>
+      {% if query %}
+        <p class="lede">Companies matching “{{ query }}”.</p>
+      {% else %}
+        <p class="lede">Find a company through its details or any of its contacts.</p>
+      {% endif %}
+    </div>
+  </section>
+
+  {% if page_obj %}
+    <div class="results-summary">
+      <strong>{{ page_obj.paginator.count }}</strong>
+      result{{ page_obj.paginator.count|pluralize }}
+      <span>·</span>
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </div>
+    <div class="search-results">
+      {% for company in page_obj %}
+        <article class="result-card">
+          <div class="result-main">
+            <p class="record-code">{{ company.company_code }}</p>
+            <h2>
+              <a href="{% url 'crm:company-detail' company.company_code %}">{{ company.name }}</a>
+            </h2>
+            <p class="muted">
+              {{ company.region|default:"Region unavailable" }}
+              {% if company.province_code %} · {{ company.province_code }}{% endif %}
+              {% if company.sales_rep %} · Sales: {{ company.sales_rep }}{% endif %}
+            </p>
+            <div class="contact-preview">
+              {% for contact in company.contacts.all %}
+                <span>
+                  {{ contact.full_name|default:contact.contact_code }}
+                  {% if contact.email %}<small>{{ contact.email }}</small>{% endif %}
+                </span>
+              {% endfor %}
+            </div>
+          </div>
+          <dl class="result-stats">
+            <div><dt>Contacts</dt><dd>{{ company.contact_count }}</dd></div>
+            <div><dt>Opportunities</dt><dd>{{ company.opportunity_count }}</dd></div>
+          </dl>
+        </article>
+      {% empty %}
+        <div class="empty-state large-empty">
+          <h2>No matches found</h2>
+          <p>Try a company code, contact surname or email address.</p>
+        </div>
+      {% endfor %}
+    </div>
+    {% include "crm/_pagination.html" with page_obj=page_obj query=query %}
+  {% elif query %}
+    <div class="empty-state large-empty">
+      <h2>No matches found</h2>
+      <p>Try a company code, contact surname or email address.</p>
+    </div>
+  {% else %}
+    <div class="empty-state large-empty">
+      <h2>Start with the search bar above</h2>
+      <p>You can search company and contact names, legacy codes and contact emails.</p>
+    </div>
+  {% endif %}
+{% endblock %}

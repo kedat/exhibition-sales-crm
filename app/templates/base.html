@@ -9,10 +9,24 @@
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href="{% url 'crm:home' %}">
-        <span class="brand-mark" aria-hidden="true">E</span>
-        <span>Exhibition Sales CRM</span>
-      </a>
+      <div class="header-inner">
+        <a class="brand" href="{% url 'crm:home' %}">
+          <span class="brand-mark" aria-hidden="true">E</span>
+          <span>Exhibition Sales CRM</span>
+        </a>
+        <form class="global-search" action="{% url 'crm:search' %}" method="get" role="search">
+          <label class="sr-only" for="global-search">Search companies and contacts</label>
+          <input
+            id="global-search"
+            name="q"
+            type="search"
+            value="{{ request.GET.q|default:'' }}"
+            placeholder="Company, contact, code or email"
+            maxlength="100"
+          >
+          <button type="submit">Search</button>
+        </form>
+      </div>
     </header>
     <main class="page-shell">
       {% block content %}{% endblock %}
