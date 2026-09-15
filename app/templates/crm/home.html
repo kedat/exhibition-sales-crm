@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}CRM foundation ready{% endblock %}
+
+{% block content %}
+  <section class="hero">
+    <p class="eyebrow">Phase 1</p>
+    <h1>The CRM foundation is ready.</h1>
+    <p class="lede">
+      The application is running locally, connected to PostgreSQL, and ready
+      for the archive schema and importer.
+    </p>
+    <div class="status-card">
+      <span class="status-dot" aria-hidden="true"></span>
+      <div>
+        <strong>Application available</strong>
+        <p>Containerized Django service on port 3000</p>
+      </div>
+    </div>
+  </section>
+{% endblock %}
