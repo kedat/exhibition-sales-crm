@@ -95,48 +95,42 @@ Each run stores the values it used, both role outputs, the policy version, final
 decision, reason codes, explanation and next action. Old runs therefore remain
 explainable even after the live opportunity or fair information changes.
 
-### Selected handoff policy
+### How I handled the team's competing requests
 
-Sales may prepare an early proposal once the fair and client budget are known.
-Technical work may continue only when the allocated area and requested height
-are also known, and the height is within the fair edition's maximum.
+Sales wants to involve the technical team early so an opportunity keeps moving.
+The technical team does not want to start design work from an incomplete brief or
+from a request that breaks a fair rule. I did not choose one team over the other:
+the assistant helps Sales prepare the handoff early, then independently checks it
+before any technical work is allowed to begin.
 
-This reconciles the competing requests:
+If the budget, stand area or requested height is missing, the assistant stops the
+handoff and tells Sales what to ask for next. It also stops when the requested
+height is above the fair's limit. Only a complete, valid enquiry can continue.
+The assistant never contacts the customer or approves technical work by itself;
+the salesperson reviews its recommendation and decides whether to create a
+follow-up task. Every run is saved so the team can later see what information was
+used and why the decision was made.
 
-- Sales gets an early, prepared proposal instead of waiting to assemble a
-  perfect brief manually.
-- Technical retains an independent safety gate before design work starts.
-- The Coordinator converts both positions into one consistent and auditable
-  outcome.
-- A conflict is never hidden by missing information; all detected blockers are
-  reported together.
+### How to try the assistant
 
-The outcome is `CONTINUE` only when all gates pass. Otherwise it is `STOP` with
-one or more stable reason codes, such as `MISSING_STAND_AREA` or
-`HEIGHT_EXCEEDS_FAIR_LIMIT`.
+For an **incomplete enquiry**, open
+[OP011026](http://localhost:3000/opportunities/OP011026/) and select
+**Prepare technical handoff**. Its stand area is missing, so the assistant stops
+and recommends asking the customer for it. You can review that recommendation
+before creating a follow-up task. Then edit the opportunity, set the allocated
+stand area field to `24.00` and run the assistant again. The new run can continue,
+while the original stopped run remains unchanged in the history.
 
-### Try an incomplete enquiry and the feedback loop
+For a **complete enquiry**, open
+[OP000230](http://localhost:3000/opportunities/OP000230/) and select
+**Prepare technical handoff**. All required information is present and the
+requested height is within the fair's limit, so the assistant allows the handoff
+to continue.
 
-Open [OP011026](http://localhost:3000/opportunities/OP011026/). Its client budget,
-fair and requested height are known, but its allocated area is missing.
-
-1. Select **Prepare technical handoff**.
-2. Observe `STOP / MISSING_STAND_AREA` and the Checker's source evidence.
-3. Select **Review and create follow-up**. The recommendation is prefilled, but
-   no task exists until you review the text/date and confirm it.
-4. Edit the opportunity and set allocated area to `24.00` m².
-5. Run the assistant again.
-6. Observe `STOP → CONTINUE`, the field-level change and the resolved reason.
-7. Open the earlier run from history; its missing-area snapshot is unchanged.
-
-### Try a conflicting and a complete enquiry
-
-- [OP000005](http://localhost:3000/opportunities/OP000005/) requests `6.00` m
-  against a `5.00` m fair maximum. The Preparer can propose early review, but the
-  Checker rejects it and the Coordinator returns
-  `STOP / HEIGHT_EXCEEDS_FAIR_LIMIT`.
-- [OP000230](http://localhost:3000/opportunities/OP000230/) is complete and within
-  its fair limit, so it returns `CONTINUE / READY_FOR_TECHNICAL_HANDOFF`.
+As an additional safety example,
+[OP000005](http://localhost:3000/opportunities/OP000005/) requests a `6.00` m stand
+where the fair allows at most `5.00` m. The assistant stops the handoff and asks
+Sales to revise the request before technical work begins.
 
 All examples come from the supplied archive and are restored by `./reset.sh`.
 
@@ -253,35 +247,52 @@ docker compose run --rm --entrypoint /app/.venv/bin/python app \
   manage.py test crm.tests.test_handoff.HandoffAgentEvaluationTests
 ```
 
-## Deliberate scope and unfinished work
+## Known limitations and deliberate scope
 
-The following are intentionally outside this first version:
+The required end-to-end MVP is implemented. The following are the main product
+limitations I would address next, rather than hidden or implied requirements:
 
-- Authentication, permissions and billing: the assignment assumes one archive
-  user.
-- General company/contact administration: the MVP focuses on the requested sales
-  workflow.
-- Chat UI, external models, model downloads and agent frameworks: unnecessary or
-  prohibited for this deterministic local stand-in.
-- Automatic email/customer contact and automatic technical approval: assistant
+- **Richer search:** search currently covers company name/code and contact first
+  name, last name, code and email. It does not yet search phone/fax numbers or
+  opportunity identifiers, and results are ordered alphabetically rather than by
+  relevance or fuzzy-match quality.
+- **CRM filters and sorting:** add filters for opportunity status, fair edition,
+  sales representative and expected close date. Activity and follow-up views
+  would also benefit from type, completion-status and date-range filters.
+- **Follow-up lifecycle:** recommended follow-ups can be reviewed and created,
+  but cannot yet be marked complete, reassigned, prioritised or rescheduled.
+- **Denser CRM interface:** the current responsive interface supports the demo
+  workflow, but production use would benefit from compact table views, sortable
+  columns, persistent filter chips, keyboard navigation, an accessibility audit
+  and usability testing with sales users.
+- **Pipeline overview:** company and opportunity pages expose the imported
+  commercial context, but there is no aggregate pipeline summary or reporting
+  across statuses, fairs and sales representatives.
+- **Scale validation:** indexed, paginated search is appropriate for the supplied
+  archive, but should be load-tested and query-profiled before claiming support
+  for substantially larger datasets.
+- **Import hardening:** the importer validates and imports the complete supplied
+  archive in memory. Streaming or staging-table import and a concurrent-import
+  lock would be appropriate for materially larger files or multiple workers.
+- **Policy evolution:** the deterministic handoff policy is explicit, tested and
+  auditable, but a later version could support versioned policy configuration,
+  policy simulation and a visual evaluation dashboard.
+
+The following remain deliberate non-goals for this assignment:
+
+- Authentication, permissions and billing, because the assignment assumes one
+  user with access to the archive.
+- General company/contact administration beyond the requested sales workflow.
+- Chat UI, external models, model downloads and an agent framework; the brief
+  asks for a deterministic local stand-in and prohibits external model calls.
+- Automatic email/customer contact or automatic technical approval; proposed
   actions remain under human control.
-- Floor plans, 3D models, quotations and bills of materials: explicitly outside
-  the sales-tool scope.
-- Relevance-ranked search and advanced activity filters: deterministic indexed
-  search and pagination cover the MVP path.
-- Streaming/staging-table import and a concurrent-import lock: the validated
-  in-memory import is suitable for the supplied archive and the single Compose
-  entrypoint. These would be revisited for materially larger files or multiple
-  import workers.
-- Marking follow-up tasks complete is a useful next workflow improvement.
-
-Optional future experiments include policy simulation and a visual evaluation
-dashboard. They were not added because they do not improve the required sales
-workflow as much as evidence, rerun comparison and human approval do.
+- Floor plans, 3D models, quotations and bills of materials, which are explicitly
+  outside the requested sales-tool scope.
 
 ## Review notes
 
-**Time spent:** Approximately 8 hours, including analysis, implementation,
+**Time spent:** Approximately 6 hours, including analysis, implementation,
 verification and documentation.
 
 - [docs/DEMO.md](docs/DEMO.md) contains a 5–7 minute presentation path and talk
