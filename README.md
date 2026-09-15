@@ -281,7 +281,8 @@ workflow as much as evidence, rerun comparison and human approval do.
 
 ## Review notes
 
-**Time spent:** `TODO before submission — replace with your actual hours and minutes.`
+**Time spent:** Approximately 8 hours, including analysis, implementation,
+verification and documentation.
 
 - [docs/DEMO.md](docs/DEMO.md) contains a 5–7 minute presentation path and talk
   track.
